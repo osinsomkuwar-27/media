@@ -50,7 +50,9 @@ export default function FeedScreen({ navigation }) {
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Hi, {user?.name}</Text>
-          <Text style={styles.balance}>{user?.coinBalance} coins</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Wallet")}>
+            <Text style={styles.balance}>{user?.coinBalance} coins</Text>
+          </TouchableOpacity>
         </View>
         <TouchableOpacity onPress={logout}>
           <Text style={styles.logout}>Logout</Text>
