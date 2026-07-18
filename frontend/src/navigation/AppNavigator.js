@@ -7,6 +7,7 @@ import AuthScreen from "../screens/AuthScreen";
 import FeedScreen from "../screens/FeedScreen";
 import UploadScreen from "../screens/UploadScreen";
 import MediaDetailsScreen from "../screens/MediaDetailsScreen";
+import WalletScreen from "../screens/WalletScreen.js";
 
 const Stack = createNativeStackNavigator();
 
@@ -35,6 +36,7 @@ export default function AppNavigator() {
               component={MediaDetailsScreen}
               options={{ title: "Media Details" }}
             />
+            <Stack.Screen name="Wallet" component={WalletScreen} options={{ title: "Wallet" }} />
           </>
         )}
       </Stack.Navigator>
