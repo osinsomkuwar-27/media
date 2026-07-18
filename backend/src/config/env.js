@@ -18,10 +18,15 @@ const env = {
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE, 10) || 5 * 1024 * 1024,
 
   storageProvider: process.env.STORAGE_PROVIDER || 's3rver',
+
+  rateLimit: {
+    globalWindowMs: parseInt(process.env.RATE_LIMIT_GLOBAL_WINDOW_MS, 10) || 15 * 60 * 1000,
+    globalMax: parseInt(process.env.RATE_LIMIT_GLOBAL_MAX, 10) || 100,
+    authWindowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS, 10) || 15 * 60 * 1000,
+    authMax: parseInt(process.env.RATE_LIMIT_AUTH_MAX, 10) || 10,
+  },
 };
 
-// Fail fast if required secrets are missing, rather than limping along
-// with an undefined JWT_SECRET (which would silently break auth later).
 const requiredInProduction = ['mongodbUri', 'jwtSecret'];
 
 if (env.nodeEnv === 'production') {

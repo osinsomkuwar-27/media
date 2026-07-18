@@ -1,8 +1,11 @@
 import catchAsync from '../utils/catchAsync.js';
 import { registerUser, loginUser } from '../services/auth.service.js';
+import { logAudit } from '../utils/auditLogger.js';
 
 export const register = catchAsync(async (req, res) => {
   const { user, token } = await registerUser(req.body);
+
+  logAudit({ req, userId: user.id, action: 'USER_REGISTERED' });
 
   res.status(201).json({
     success: true,
@@ -13,6 +16,8 @@ export const register = catchAsync(async (req, res) => {
 
 export const login = catchAsync(async (req, res) => {
   const { user, token } = await loginUser(req.body);
+
+  logAudit({ req, userId: user.id, action: 'USER_LOGIN' });
 
   res.status(200).json({
     success: true,
