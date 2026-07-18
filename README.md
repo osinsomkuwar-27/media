@@ -114,6 +114,7 @@ flowchart TD
 ---
 
 ##  Folder Structure
+```
 
 Paid-Media-Locker/
 │
@@ -220,6 +221,7 @@ Paid-Media-Locker/
 ├── .gitignore
 ├── LICENSE
 └── README.md
+```
 
 **Why this separation matters:** routes only define endpoints, controllers only translate HTTP ↔ data, and all business logic (transactions, authorization checks, price calculation) lives in `services/`. This keeps controllers thin and testable, and means the unlock logic can be unit-tested independently of Express.
 
