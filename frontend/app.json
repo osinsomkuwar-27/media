@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "frontend",
+    "name": "Paid Media Locker",
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,6 +16,7 @@
       "supportsTablet": true
     },
     "android": {
+       "package": "com.osinsomkuwar.paidmedialocker",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -27,6 +28,11 @@
     },
     "plugins": [
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7d121b8d-a219-4109-bfd5-8686664a1c25"
+      }
+    }
   }
 }
