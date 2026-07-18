@@ -508,11 +508,11 @@ docker exec -it <mongo-container-name> mongosh --eval "rs.initiate()"
 
 | Step | Notes |
 |---|---|
-| **MongoDB Atlas** | Free M0 cluster; whitelist `0.0.0.0/0` for simplicity in this assignment |
-| **Backend hosting** | Any Node-friendly host (e.g. Render, Railway) with `MONGODB_URI`/`JWT_SECRET` set as environment secrets |
-| **Media storage in production** | `STORAGE_PROVIDER=gridfs` — media lives in the same Atlas cluster, avoiding reliance on the host's (often ephemeral) local disk |
-| **Frontend** | Update `API_BASE_URL` in `src/config/api.js` to the deployed HTTPS URL before building |
-| **APK** | Built via `eas build -p android --profile preview` (or equivalent) once `API_BASE_URL` points at the live backend |
+| **MongoDB Atlas** | Free M0 cluster used as the primary database and GridFS storage backend |
+| **Backend Hosting** | Deployed on **Render**: `https://paid-media-locker-tomb.onrender.com` |
+| **Media Storage** | Original images and previews are stored in **MongoDB GridFS** |
+| **Frontend** | Configured to communicate with the deployed Render backend over HTTPS |
+| **Android APK** | Built using **Expo Application Services (EAS)** and distributed as an APK |
 
 ---
 
