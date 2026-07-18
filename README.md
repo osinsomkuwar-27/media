@@ -9,8 +9,6 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
 [![React Native](https://img.shields.io/badge/React%20Native-Expo-000020?logo=expo&logoColor=white)](https://expo.dev)
 [![JWT](https://img.shields.io/badge/Auth-JWT-black?logo=jsonwebtokens)](https://jwt.io)
-[![Docker](https://img.shields.io/badge/Docker-configured-2496ED?logo=docker&logoColor=white)](https://www.docker.com)
-[![Jest](https://img.shields.io/badge/Tests-Jest%20%2B%20Supertest-C21325?logo=jest&logoColor=white)](https://jestjs.io)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](#license)
 
 </div>
