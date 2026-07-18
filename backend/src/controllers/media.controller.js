@@ -7,6 +7,7 @@ import { createMedia, getFeed, getMediaById } from '../services/media.services.j
 import { unlockMedia } from '../services/unlock.services.js';
 import { openDownloadStream } from '../services/storage/gridfs.storage.js';
 import { signMediaAccessToken, verifyMediaAccessToken } from '../utils/mediaToken.js';
+import { logAudit } from '../utils/auditLogger.js';
 
 export const uploadMedia = catchAsync(async (req, res) => {
   if (!req.file) {
@@ -22,6 +23,8 @@ export const uploadMedia = catchAsync(async (req, res) => {
     unlockPrice,
     file: req.file,
   });
+
+  logAudit({ req, userId: req.user._id, action: 'MEDIA_UPLOADED', targetId: media._id });
 
   res.status(201).json({
     success: true,
@@ -75,9 +78,6 @@ export const streamPreview = catchAsync(async (req, res) => {
   downloadStream.pipe(res);
 });
 
-// PROTECTED (behind normal JWT). Verifies ownership/purchase ONCE,
-// then mints a short-lived, media-scoped token. This is the only
-// place authorization for original media is decided.
 export const getAccessUrl = catchAsync(async (req, res) => {
   validateObjectId(req.params.id, 'media id');
   const media = await Media.findById(req.params.id);
@@ -91,6 +91,13 @@ export const getAccessUrl = catchAsync(async (req, res) => {
   if (!isOwner) {
     const purchase = await Purchase.findOne({ buyerId: req.user._id, mediaId: media._id });
     if (!purchase) {
+      logAudit({
+        req,
+        userId: req.user._id,
+        action: 'FAILED_MEDIA_ACCESS',
+        targetId: media._id,
+        metadata: { reason: 'NOT_OWNER_OR_PURCHASER' },
+      });
       throw new AppError('You have not unlocked this media', 403, 'FORBIDDEN');
     }
   }
@@ -105,19 +112,13 @@ export const getAccessUrl = catchAsync(async (req, res) => {
   });
 });
 
-// PUBLIC ROUTE (no JWT middleware) — because <Image> can't reliably
-// send an Authorization header. Security instead comes entirely from
-// the signed, expiring, media-scoped token issued by getAccessUrl above.
-// No ownership/purchase re-check happens here on purpose: that check
-// already happened when the token was minted, and re-checking here
-// would require the caller to be authenticated again, defeating the
-// point of a headerless-Image-compatible URL.
 export const accessOriginal = catchAsync(async (req, res) => {
   validateObjectId(req.params.id, 'media id');
 
   const { token } = req.query;
 
   if (!token) {
+    logAudit({ req, action: 'FAILED_MEDIA_ACCESS', targetId: req.params.id, metadata: { reason: 'TOKEN_MISSING' } });
     throw new AppError('Access token is required', 401, 'TOKEN_REQUIRED');
   }
 
@@ -125,6 +126,9 @@ export const accessOriginal = catchAsync(async (req, res) => {
   try {
     decoded = verifyMediaAccessToken(token);
   } catch (err) {
+    const reason = err.name === 'TokenExpiredError' ? 'TOKEN_EXPIRED' : 'TOKEN_INVALID';
+    logAudit({ req, action: 'FAILED_MEDIA_ACCESS', targetId: req.params.id, metadata: { reason } });
+
     if (err.name === 'TokenExpiredError') {
       throw new AppError('This access link has expired', 401, 'TOKEN_EXPIRED');
     }
@@ -132,6 +136,13 @@ export const accessOriginal = catchAsync(async (req, res) => {
   }
 
   if (decoded.purpose !== 'media_access' || decoded.mediaId !== req.params.id) {
+    logAudit({
+      req,
+      userId: decoded.userId,
+      action: 'FAILED_MEDIA_ACCESS',
+      targetId: req.params.id,
+      metadata: { reason: 'TOKEN_MEDIA_MISMATCH' },
+    });
     throw new AppError('This token is not valid for the requested media', 403, 'TOKEN_MEDIA_MISMATCH');
   }
 
@@ -140,6 +151,8 @@ export const accessOriginal = catchAsync(async (req, res) => {
   if (!media) {
     throw new AppError('Media not found', 404, 'MEDIA_NOT_FOUND');
   }
+
+  logAudit({ req, userId: decoded.userId, action: 'MEDIA_ACCESSED', targetId: media._id });
 
   res.set('Content-Type', media.mimeType);
   const downloadStream = openDownloadStream(media.originalFileId);
@@ -157,6 +170,14 @@ export const unlock = catchAsync(async (req, res) => {
   validateObjectId(req.params.id, 'media id');
 
   const result = await unlockMedia({ mediaId: req.params.id, buyerId: req.user._id });
+
+  logAudit({
+    req,
+    userId: req.user._id,
+    action: 'MEDIA_UNLOCKED',
+    targetId: req.params.id,
+    metadata: { alreadyUnlocked: result.alreadyUnlocked },
+  });
 
   res.status(200).json({
     success: true,
