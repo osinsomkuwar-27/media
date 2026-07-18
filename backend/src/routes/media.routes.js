@@ -13,13 +13,12 @@ import {
 } from '../controllers/media.controller.js';
 
 const router = Router();
-
+router.get('/:id/preview', streamPreview);
 router.use(protect);
 
 router.post('/', upload.single('image'), validate(uploadMediaSchema), uploadMedia);
 router.get('/', listMedia);
 router.get('/:id', getMedia);
-router.get('/:id/preview', streamPreview);
 router.get('/:id/access', accessOriginal);
 router.post('/:id/unlock', unlock);
 
