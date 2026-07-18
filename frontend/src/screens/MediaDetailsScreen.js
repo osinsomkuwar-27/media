@@ -17,19 +17,39 @@ import { API_BASE_URL } from "../config/api";
 
 export default function MediaDetailsScreen({ route }) {
   const { mediaId } = route.params;
-  const { token, refreshUser } = useAuth();
+  const { refreshUser } = useAuth();
   const [media, setMedia] = useState(null);
+  const [accessUrl, setAccessUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unlocking, setUnlocking] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   async function loadMedia() {
     try {
       const res = await apiClient.get(`/media/${mediaId}`);
-      setMedia(res.data.data.media);
+      const fetchedMedia = res.data.data.media;
+      setMedia(fetchedMedia);
+      setImageLoadError(false);
+
+      if (fetchedMedia.isOwner || fetchedMedia.isUnlocked) {
+        await loadAccessUrl();
+      } else {
+        setAccessUrl(null);
+      }
     } catch (err) {
       Alert.alert("Error", getErrorMessage(err));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadAccessUrl() {
+    try {
+      const res = await apiClient.get(`/media/${mediaId}/access-url`);
+      setAccessUrl(res.data.data.accessUrl);
+    } catch (err) {
+      // If this fails, we simply fall back to showing the preview below.
+      setAccessUrl(null);
     }
   }
 
@@ -72,14 +92,26 @@ export default function MediaDetailsScreen({ route }) {
     );
   }
 
-  const imageSource = {
-  uri: `${API_BASE_URL}${media.previewUrl}`,
-};
+  const canSeeOriginal = (media.isOwner || media.isUnlocked) && accessUrl;
+
+  const imageSource = canSeeOriginal
+    ? { uri: `${API_BASE_URL}${accessUrl}` }
+    : { uri: `${API_BASE_URL}${media.previewUrl}` };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
-        <Image source={imageSource} style={styles.image} />
+        {imageLoadError ? (
+          <View style={[styles.image, styles.imageErrorBox]}>
+            <Text style={styles.imageErrorText}>Image failed to load</Text>
+          </View>
+        ) : (
+          <Image
+            source={imageSource}
+            style={styles.image}
+            onError={() => setImageLoadError(true)}
+          />
+        )}
 
         <View style={styles.body}>
           <Text style={styles.title}>{media.title}</Text>
@@ -125,6 +157,8 @@ export default function MediaDetailsScreen({ route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f5f5" },
   image: { width: "100%", height: 320, backgroundColor: "#eee" },
+  imageErrorBox: { justifyContent: "center", alignItems: "center" },
+  imageErrorText: { color: "#999" },
   body: { padding: 20 },
   title: { fontSize: 22, fontWeight: "700", color: "#1a1a1a" },
   description: { fontSize: 14, color: "#555", marginTop: 8 },
